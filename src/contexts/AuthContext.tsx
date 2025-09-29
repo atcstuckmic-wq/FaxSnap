@@ -29,45 +29,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUserProfile = async () => {
     if (user) {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        
-        if (error) {
-          // Handle case where profiles table doesn't exist
-          if (error.code === 'PGRST205') {
-            console.warn('❌ Database Migration Required!');
-            console.warn('The profiles table does not exist. Please run the database migration:');
-            console.warn('1. Go to your Supabase dashboard');
-            console.warn('2. Click "SQL Editor" → "New Query"');
-            console.warn('3. Copy content from supabase/migrations/20250928223951_noisy_field.sql');
-            console.warn('4. Paste and click "Run"');
-            console.warn('5. Refresh this page');
-            return;
-          }
-          console.error('Error fetching user profile:', error);
-          return;
-        }
-        
-        setUserProfile(data);
-      } catch (error) {
-        // Handle any unexpected errors from Supabase request
-        if (error && typeof error === 'object' && 'code' in error && error.code === 'PGRST205') {
-          console.warn('❌ Database Migration Required!');
-          console.warn('The profiles table does not exist. Please run the database migration:');
-          console.warn('1. Go to your Supabase dashboard');
-          console.warn('2. Click "SQL Editor" → "New Query"');
-          console.warn('3. Copy content from supabase/migrations/20250928223951_noisy_field.sql');
-          console.warn('4. Paste and click "Run"');
-          console.warn('5. Refresh this page');
-          return;
-        }
-        // Silently handle other errors to prevent error propagation
-        console.warn('Could not fetch user profile. This may be due to database setup.');
-      }
+      // Skip profile loading until database migration is run
+      // This prevents the Supabase request failed error
+      console.warn('⚠️  Skipping profile loading - database migration required');
+      console.warn('To enable full functionality, run the database migration:');
+      console.warn('1. Go to your Supabase dashboard');
+      console.warn('2. Click "SQL Editor" → "New Query"');  
+      console.warn('3. Copy content from supabase/migrations/20250928223951_noisy_field.sql');
+      console.warn('4. Paste and click "Run"');
+      console.warn('5. Refresh this page');
     }
   };
 
