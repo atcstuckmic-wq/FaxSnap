@@ -34,7 +34,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ type, onSuccess }) => {
         : await signUp(data.email, data.password);
 
       if (error) {
-        toast.error(error.message);
+        if (error.message.includes('Email not confirmed')) {
+          toast.error('Please check your email and click the confirmation link before signing in.');
+        } else {
+          toast.error(error.message);
+        }
       } else {
         toast.success(type === 'login' ? 'Welcome back!' : 'Account created successfully!');
         onSuccess?.();
