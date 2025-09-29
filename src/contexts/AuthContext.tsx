@@ -39,13 +39,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (error) {
           // Handle case where profiles table doesn't exist
           if (error.code === 'PGRST205') {
-            console.error('❌ Database Migration Required!');
-            console.error('The profiles table does not exist. Please run the database migration:');
-            console.error('1. Go to your Supabase dashboard');
-            console.error('2. Click "SQL Editor" → "New Query"');
-            console.error('3. Copy content from supabase/migrations/20250928223951_noisy_field.sql');
-            console.error('4. Paste and click "Run"');
-            console.error('5. Refresh this page');
+            console.warn('❌ Database Migration Required!');
+            console.warn('The profiles table does not exist. Please run the database migration:');
+            console.warn('1. Go to your Supabase dashboard');
+            console.warn('2. Click "SQL Editor" → "New Query"');
+            console.warn('3. Copy content from supabase/migrations/20250928223951_noisy_field.sql');
+            console.warn('4. Paste and click "Run"');
+            console.warn('5. Refresh this page');
             return;
           }
           throw error;
