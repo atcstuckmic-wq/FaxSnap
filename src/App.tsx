@@ -1,7 +1,9 @@
 import React from 'react';
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ConnectionTester } from './utils/connectionTest';
 import Layout from './components/Layout/Layout';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -23,6 +25,19 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 };
 
 function App() {
+  useEffect(() => {
+    // Run connection tests on app startup
+    const results = ConnectionTester.runAllTests();
+    ConnectionTester.logResults(results);
+
+    // Show browser notification if Supabase is not configured
+    const supabaseResult = results.find(r => r.service === 'Supabase');
+    if (supabaseResult?.status !== 'configured') {
+      console.warn('🚨 Account creation will fail until Supabase is configured!');
+      console.warn('📖 Follow QUICKSTART.md for 5-minute setup');
+    }
+  }, []);
+
   return (
     <AuthProvider>
       <Router>
