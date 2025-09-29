@@ -5,7 +5,25 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 let supabase: any;
 
-if (!supabaseUrl || !supabaseAnonKey || !supabaseUrl.startsWith('http')) {
+// More robust validation for Supabase configuration
+const isValidSupabaseConfig = () => {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return false;
+  }
+  
+  // Check if URL looks like a valid Supabase URL
+  const supabaseUrlPattern = /^https:\/\/[a-z0-9-]+\.supabase\.co$/;
+  if (!supabaseUrlPattern.test(supabaseUrl)) {
+    return false;
+  }
+  
+  // Check if anon key looks valid (should start with 'eyJ')
+  if (!supabaseAnonKey.startsWith('eyJ')) {
+    return false;
+  }
+  
+  return true;
+};
   console.error('⚠️ Supabase not configured. Please set up your environment variables.');
   
   // Create a complete mock client that doesn't make network requests
@@ -101,4 +119,5 @@ if (!supabaseUrl || !supabaseAnonKey || !supabaseUrl.startsWith('http')) {
   supabase = createClient(supabaseUrl, supabaseAnonKey);
 }
 
+if (!isValidSupabaseConfig()) {
 export { supabase };
