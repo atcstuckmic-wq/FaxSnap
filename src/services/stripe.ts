@@ -42,12 +42,12 @@ export class StripeService {
         throw new Error('Stripe failed to load');
       }
 
-      const { error } = await stripe.redirectToCheckout({
+      const { error: stripeRedirectError } = await stripe.redirectToCheckout({
         sessionId,
       });
 
-      if (error) {
-        throw error;
+      if (stripeRedirectError) {
+        throw stripeRedirectError;
       }
     } catch (error) {
       console.error('Stripe checkout error:', error);
