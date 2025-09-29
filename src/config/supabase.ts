@@ -3,56 +3,49 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Comprehensive check if Supabase is properly configured
-const isSupabaseConfigured = (() => {
-  // Check if variables exist
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return false;
-  }
+// Check if environment variables exist and are not empty
+const hasValidEnvVars = supabaseUrl && supabaseAnonKey && 
+  supabaseUrl.trim() !== '' && supabaseAnonKey.trim() !== '';
 
-  // Check for common placeholder patterns
-  const placeholderPatterns = [
-    'your-project', 'YOUR_PROJECT', 'your_anon_key', 'YOUR_ANON_KEY',
-    'xxxxx', 'XXXXX', 'placeholder', 'PLACEHOLDER', 'example', 'EXAMPLE',
-    'abcdef', 'ABCDEF', 'project-id', 'PROJECT_ID'
-  ];
+// Check for placeholder/example values
+const hasPlaceholders = hasValidEnvVars && (
+  supabaseUrl.includes('your-project') ||
+  supabaseUrl.includes('YOUR_PROJECT') ||
+  supabaseUrl.includes('xxxxx') ||
+  supabaseUrl.includes('example') ||
+  supabaseAnonKey.includes('your_anon_key') ||
+  supabaseAnonKey.includes('YOUR_ANON_KEY') ||
+  supabaseAnonKey.includes('xxxxx') ||
+  supabaseAnonKey === 'eyJhbGci...'
+);
 
-  const hasUrlPlaceholder = placeholderPatterns.some(pattern => 
-    supabaseUrl.toLowerCase().includes(pattern.toLowerCase())
-  );
-  const hasKeyPlaceholder = placeholderPatterns.some(pattern => 
-    supabaseAnonKey.toLowerCase().includes(pattern.toLowerCase())
-  );
+// Validate Supabase URL format
+const hasValidUrl = hasValidEnvVars && 
+  supabaseUrl.startsWith('https://') && 
+  supabaseUrl.includes('.supabase.co') &&
+  !supabaseUrl.includes('localhost');
 
-  if (hasUrlPlaceholder || hasKeyPlaceholder) {
-    return false;
-  }
+// Validate anon key format (should be JWT starting with eyJ and reasonably long)
+const hasValidKey = hasValidEnvVars && 
+  supabaseAnonKey.startsWith('eyJ') && 
+  supabaseAnonKey.length > 100;
 
-  // Validate URL format - must be https and contain supabase.co
-  if (!supabaseUrl.startsWith('https://') || !supabaseUrl.includes('supabase.co')) {
-    return false;
-  }
-
-  // Validate anon key format - must be JWT (starts with eyJ) and be reasonably long
-  if (!supabaseAnonKey.startsWith('eyJ') || supabaseAnonKey.length < 100) {
-    return false;
-  }
-
-  // Additional validation: URL should match pattern
-  const urlPattern = /^https:\/\/[a-z0-9]+\.supabase\.co$/;
-  if (!urlPattern.test(supabaseUrl)) {
-    return false;
-  }
-
-  return true;
-})();
+const isSupabaseConfigured = hasValidEnvVars && !hasPlaceholders && hasValidUrl && hasValidKey;
 
 let supabase: any;
 
 if (!isSupabaseConfigured) {
-  console.warn('⚠️ Supabase not configured. Using mock client.');
+  if (!hasValidEnvVars) {
+    console.warn('⚠️ Supabase environment variables not set. Using mock client.');
+  } else if (hasPlaceholders) {
+    console.warn('⚠️ Supabase contains placeholder values. Using mock client.');
+  } else if (!hasValidUrl) {
+    console.warn('⚠️ Invalid Supabase URL format. Using mock client.');
+  } else if (!hasValidKey) {
+    console.warn('⚠️ Invalid Supabase anon key format. Using mock client.');
+  }
   
-  // Create a complete mock client that prevents network requests
+  // Complete mock client that prevents all network requests
   supabase = {
     auth: {
       getSession: () => Promise.resolve({ 
@@ -73,14 +66,14 @@ if (!isSupabaseConfigured) {
       signUp: () => Promise.resolve({ 
         data: { user: null, session: null },
         error: { 
-          message: 'Please connect to Supabase first. Click the "Supabase" button in Bolt settings.',
+          message: 'Supabase not configured. Please set up your Supabase credentials in the .env file.',
           status: 400
         } 
       }),
       signInWithPassword: () => Promise.resolve({ 
         data: { user: null, session: null },
         error: { 
-          message: 'Please connect to Supabase first. Click the "Supabase" button in Bolt settings.',
+          message: 'Supabase not configured. Please set up your Supabase credentials in the .env file.',
           status: 400
         } 
       }),
