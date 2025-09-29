@@ -55,11 +55,12 @@ const Home: React.FC = () => {
                   </Button>
                 </Link>
               ) : (
-                   className="text-lg px-8 py-4 bg-green-600 hover:bg-green-700 border-green-600 hover:border-green-700"
-                  <Button size="lg" variant="secondary" className="text-lg px-8 py-4">
+                <Link to="/register">
+                  <Button size="lg" variant="secondary" className="text-lg px-8 py-4 bg-green-600 hover:bg-green-700 border-green-600 hover:border-green-700">
                     Get Started Free
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
+                </Link>
                 </Link>
               )}
             </div>
