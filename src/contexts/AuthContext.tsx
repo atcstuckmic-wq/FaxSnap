@@ -28,16 +28,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   const refreshUserProfile = async () => {
-    if (user) {
-      // Skip profile loading until database migration is run
-      // This prevents the Supabase request failed error
-      console.warn('⚠️  Skipping profile loading - database migration required');
-      console.warn('To enable full functionality, run the database migration:');
-      console.warn('1. Go to your Supabase dashboard');
-      console.warn('2. Click "SQL Editor" → "New Query"');  
-      console.warn('3. Copy content from supabase/migrations/20250928223951_noisy_field.sql');
-      console.warn('4. Paste and click "Run"');
-      console.warn('5. Refresh this page');
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST205') {
+          console.warn('⚠️ Database Migration Required!');
+          console.warn('The profiles table does not exist. Please run the database migrations:');
+          console.warn('1. Go to your Supabase dashboard');
+          console.warn('2. Click "SQL Editor" → "New Query"');  
+          console.warn('3. Copy content from supabase/migrations/20250928223951_noisy_field.sql');
+          console.warn('4. Paste and click "Run"');
+          console.warn('5. Copy content from supabase/migrations/token_expiration.sql');
+          console.warn('6. Paste and click "Run"');
+          console.warn('7. Refresh this page');
+          return;
+        }
+      }
+
+      setUserProfile(data);
+    } catch (error: any) {
+      if (error?.message?.includes('PGRST205') || error?.body?.includes('PGRST205')) {
+        console.warn('⚠️ Database Migration Required!');
+        console.warn('The profiles table does not exist. Please run the database migrations:');
+        console.warn('1. Go to your Supabase dashboard');
+        console.warn('2. Click "SQL Editor" → "New Query"');  
+        console.warn('3. Copy content from supabase/migrations/20250928223951_noisy_field.sql');
+        console.warn('4. Paste and click "Run"');
+        console.warn('5. Copy content from supabase/migrations/token_expiration.sql');
+        console.warn('6. Paste and click "Run"');
+        console.warn('7. Refresh this page');
+        return;
+      }
+      console.error('Error loading user profile:', error);
     }
   };
 
