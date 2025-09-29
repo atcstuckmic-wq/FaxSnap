@@ -60,11 +60,19 @@ const SendFaxForm: React.FC<SendFaxFormProps> = ({ userTokens, onFaxSent }) => {
 
       // Step 2: Send fax via Telnyx
       toast.loading('Sending fax...', { id: 'send' });
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const telnyxFromNumber = import.meta.env.VITE_TELNYX_FROM_NUMBER;
+
+      if (!supabaseUrl || !telnyxFromNumber) {
+        throw new Error('Missing Telnyx configuration');
+      }
+
       const faxResponse = await telnyxService.sendFax({
         to: data.recipientNumber,
-        from: '+15551234567', // Your fax number from Telnyx
+        from: telnyxFromNumber,
         media_url: mediaUrl,
         store_media: true,
+        webhook_url: `${supabaseUrl}/functions/v1/telnyx-webhook`,
       });
       toast.dismiss('send');
 
