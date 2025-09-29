@@ -3,59 +3,46 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+// Check if Supabase is properly configured
+const isSupabaseConfigured = supabaseUrl && supabaseAnonKey && 
+  supabaseUrl.includes('supabase.co') && 
+  supabaseAnonKey.length > 20;
+
 let supabase: any;
 
-// More robust validation for Supabase configuration
-const isValidSupabaseConfig = () => {
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return false;
-  }
+if (!isSupabaseConfigured) {
+  console.warn('⚠️ Supabase not configured. Using mock client.');
   
-  // Check if URL looks like a valid Supabase URL
-  const supabaseUrlPattern = /^https:\/\/[a-z0-9-]+\.supabase\.co$/;
-  if (!supabaseUrlPattern.test(supabaseUrl)) {
-    return false;
-  }
-  
-  // Check if anon key looks valid (should start with 'eyJ')
-  if (!supabaseAnonKey.startsWith('eyJ')) {
-    return false;
-  }
-  
-  return true;
-};
-
-if (!isValidSupabaseConfig()) {
-  console.error('⚠️ Supabase not configured. Please set up your environment variables.');
-  
-  // Create a complete mock client that doesn't make network requests
+  // Create a complete mock client that prevents network requests
   supabase = {
     auth: {
       getSession: () => Promise.resolve({ 
         data: { session: null }, 
         error: null 
       }),
-      onAuthStateChange: () => ({ 
-        data: { 
-          subscription: { 
-            unsubscribe: () => {} 
+      onAuthStateChange: (callback: any) => {
+        // Call callback immediately with no session
+        setTimeout(() => callback('INITIAL_SESSION', null), 0);
+        return { 
+          data: { 
+            subscription: { 
+              unsubscribe: () => {} 
+            } 
           } 
-        } 
-      }),
+        };
+      },
       signUp: () => Promise.resolve({ 
         data: { user: null, session: null },
         error: { 
-          message: 'Supabase not configured. Please click the "Supabase" button in settings to connect your database.',
-          status: 400,
-          statusCode: 400
+          message: 'Please connect to Supabase first. Click the "Supabase" button in Bolt settings.',
+          status: 400
         } 
       }),
       signInWithPassword: () => Promise.resolve({ 
         data: { user: null, session: null },
         error: { 
-          message: 'Supabase not configured. Please click the "Supabase" button in settings to connect your database.',
-          status: 400,
-          statusCode: 400
+          message: 'Please connect to Supabase first. Click the "Supabase" button in Bolt settings.',
+          status: 400
         } 
       }),
       signOut: () => Promise.resolve({ error: null }),
@@ -66,59 +53,63 @@ if (!isValidSupabaseConfig()) {
           single: () => Promise.resolve({ 
             data: null, 
             error: { 
-              message: 'Database not configured',
-              status: 400,
-              statusCode: 400
+              message: 'Database not connected. Please set up Supabase.',
+              status: 400
             }
           }),
           order: () => Promise.resolve({
             data: [],
             error: {
-              message: 'Database not configured',
-              status: 400,
-              statusCode: 400
+              message: 'Database not connected. Please set up Supabase.',
+              status: 400
             }
           })
         }),
         order: () => Promise.resolve({
           data: [],
           error: {
-            message: 'Database not configured',
-            status: 400,
-            statusCode: 400
+            message: 'Database not connected. Please set up Supabase.',
+            status: 400
           }
         })
       }),
-      insert: () => Promise.resolve({
-        data: null,
-        error: {
-          message: 'Database not configured',
-          status: 400,
-          statusCode: 400
-        }
+      insert: () => ({
+        select: () => Promise.resolve({
+          data: null,
+          error: {
+            message: 'Database not connected. Please set up Supabase.',
+            status: 400
+          }
+        })
       }),
-      update: () => Promise.resolve({
-        data: null,
-        error: {
-          message: 'Database not configured',
-          status: 400,
-          statusCode: 400
-        }
+      update: () => ({
+        eq: () => Promise.resolve({
+          data: null,
+          error: {
+            message: 'Database not connected. Please set up Supabase.',
+            status: 400
+          }
+        })
       })
     }),
     functions: {
       invoke: () => Promise.resolve({
         data: null,
         error: {
-          message: 'Supabase functions not configured',
-          status: 400,
-          statusCode: 400
+          message: 'Supabase functions not available. Please configure Supabase.',
+          status: 400
         }
       })
     }
   };
 } else {
-  supabase = createClient(supabaseUrl, supabaseAnonKey);
+  try {
+    supabase = createClient(supabaseUrl, supabaseAnonKey);
+  } catch (error) {
+    console.error('Failed to create Supabase client:', error);
+    // Fall back to mock client if creation fails
+    supabase = supabase || {};
+  }
 }
 
 export { supabase };
