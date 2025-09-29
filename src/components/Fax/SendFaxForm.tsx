@@ -85,13 +85,15 @@ const SendFaxForm: React.FC<SendFaxFormProps> = ({ userTokens, onFaxSent }) => {
       }
 
       // Step 4: Deduct tokens from user account
-      const { error: tokenError } = await supabase
-        .from('profiles')
-        .update({ tokens: userTokens - tokensNeeded })
-        .eq('id', user.id);
+      // Use the new token system
+      const { data: tokenResult, error: tokenError } = await supabase
+        .rpc('use_tokens', {
+          user_uuid: user.id,
+          tokens_needed: tokensNeeded
+        });
 
-      if (tokenError) {
-        console.error('Failed to deduct tokens:', tokenError);
+      if (tokenError || !tokenResult) {
+        console.error('Failed to use tokens:', tokenError);
         toast.error('Fax sent but failed to deduct tokens. Please contact support.');
       }
       

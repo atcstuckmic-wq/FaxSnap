@@ -82,6 +82,7 @@ const TokenPackages: React.FC<TokenPackagesProps> = ({ onSelectPackage }) => {
 
             <div className="text-sm text-gray-600 mb-6">
               <p>{calculatePricePerToken(pkg.tokens, pkg.price)} per token</p>
+              <p className="text-xs text-amber-600 mt-1">Expires 6 months after purchase</p>
             </div>
 
             <ul className="space-y-2 mb-6">
@@ -96,10 +97,14 @@ const TokenPackages: React.FC<TokenPackagesProps> = ({ onSelectPackage }) => {
             </ul>
 
             <Button
-              variant={pkg.popular ? 'primary' : 'outline'}
+              variant="primary"
               size="lg"
               onClick={() => onSelectPackage ? onSelectPackage(pkg.id) : handlePurchase(pkg)}
-              className="w-full"
+              className={`w-full font-semibold shadow-lg transition-all duration-200 ${
+                pkg.popular 
+                  ? 'bg-green-600 hover:bg-green-700 border-green-600 hover:border-green-700 animate-pulse' 
+                  : 'bg-green-600 hover:bg-green-700 border-green-600 hover:border-green-700'
+              }`}
             >
               Purchase Now
             </Button>

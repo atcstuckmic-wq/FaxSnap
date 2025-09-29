@@ -90,6 +90,19 @@ const Dashboard: React.FC = () => {
             </div>
             <h3 className="text-2xl font-bold text-gray-900">{userProfile?.tokens || 0}</h3>
             <p className="text-gray-600">Available Tokens</p>
+            {(userProfile?.tokens || 0) < 5 && (
+              <div className="mt-4">
+                <Button
+                  onClick={() => setActiveTab('tokens')}
+                  variant="primary"
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700 text-white font-semibold shadow-lg animate-pulse"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Buy More Tokens
+                </Button>
+              </div>
+            )}
           </Card>
 
           <Card className="text-center">
@@ -118,14 +131,19 @@ const Dashboard: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors relative ${
                   activeTab === tab.id
                     ? 'border-primary-500 text-primary-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <tab.icon className="inline h-5 w-5 mr-2" />
+                <tab.icon className={`inline h-5 w-5 mr-2 ${tab.id === 'tokens' ? 'text-green-600' : ''}`} />
                 {tab.label}
+                {tab.id === 'tokens' && (userProfile?.tokens || 0) < 5 && (
+                  <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center animate-pulse">
+                    !
+                  </span>
+                )}
               </button>
             ))}
           </nav>
@@ -200,7 +218,10 @@ const Dashboard: React.FC = () => {
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Buy More Tokens</h2>
                 <p className="text-gray-600">
-                  Choose the package that works best for you. Tokens expire after 6 months.
+                  Choose the package that works best for you. 
+                  <span className="block mt-1 text-sm text-amber-600 font-medium">
+                    ⏰ Tokens expire 6 months after purchase
+                  </span>
                 </p>
               </div>
               
