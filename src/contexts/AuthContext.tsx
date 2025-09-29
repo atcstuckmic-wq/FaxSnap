@@ -45,20 +45,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Handle missing profile (PGRST116) by creating a default profile
       if (error && error.code === 'PGRST116') {
-        console.error('🚨 DATABASE MIGRATION REQUIRED');
-        console.error('='.repeat(50));
-        console.error('Your database needs to be set up. Follow these steps:');
-        console.error('');
-        console.error('1. Go to your Supabase dashboard');
-        console.error('2. Click "SQL Editor" → "New Query"');
-        console.error('3. Copy ALL content from:');
-        console.error('   supabase/migrations/20250928223951_noisy_field.sql');
-        console.error('4. Paste and click "Run"');
-        console.error('5. You should see "Success. No rows returned"');
-        console.error('6. Refresh this page');
-        console.error('');
-        console.error('Need help? Check QUICKSTART.md for detailed steps');
-        console.error('='.repeat(50));
+        console.warn(`🚨 DATABASE MIGRATION REQUIRED
+${'='.repeat(50)}
+Your database needs to be set up. Follow these steps:
+
+1. Go to your Supabase dashboard
+2. Click "SQL Editor" → "New Query"
+3. Copy ALL content from:
+   supabase/migrations/20250928223951_noisy_field.sql
+4. Paste and click "Run"
+5. You should see "Success. No rows returned"
+6. Refresh this page
+
+Need help? Check QUICKSTART.md for detailed steps
+${'='.repeat(50)}`);
         return;
       }
 
@@ -66,22 +66,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       // Handle RLS policy violations (42501) and other database errors
       if (error?.code === '42501' || error?.message?.includes('row-level security')) {
-        console.error('🚨 DATABASE MIGRATION REQUIRED');
-        console.error('='.repeat(50));
-        console.error('Row Level Security policies are not set up.');
-        console.error('');
-        console.error('REQUIRED: Run database migrations first:');
-        console.error('');
-        console.error('1. Go to your Supabase dashboard');
-        console.error('2. Click "SQL Editor" → "New Query"');
-        console.error('3. Copy ALL content from:');
-        console.error('   supabase/migrations/20250928223951_noisy_field.sql');
-        console.error('4. Paste and click "Run"');
-        console.error('5. You should see "Success. No rows returned"');
-        console.error('6. Sign out and sign back in');
-        console.error('');
-        console.error('Need help? Check QUICKSTART.md for detailed steps');
-        console.error('='.repeat(50));
+        console.warn(`🚨 DATABASE MIGRATION REQUIRED
+${'='.repeat(50)}
+Row Level Security policies are not set up.
+
+REQUIRED: Run database migrations first:
+
+1. Go to your Supabase dashboard
+2. Click "SQL Editor" → "New Query"
+3. Copy ALL content from:
+   supabase/migrations/20250928223951_noisy_field.sql
+4. Paste and click "Run"
+5. You should see "Success. No rows returned"
+6. Sign out and sign back in
+
+Need help? Check QUICKSTART.md for detailed steps
+${'='.repeat(50)}`);
         return;
       }
       
