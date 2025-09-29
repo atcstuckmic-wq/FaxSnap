@@ -38,59 +38,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        if (error.code === 'PGRST205') {
-          console.warn('⚠️ Database Migration Required!');
-          console.warn('The profiles table does not exist. Please run the database migrations:');
-          console.warn('1. Go to your Supabase dashboard');
-          console.warn('2. Click "SQL Editor" → "New Query"');  
-          console.warn('3. Copy content from supabase/migrations/20250928223951_noisy_field.sql');
-          console.warn('4. Paste and click "Run"');
-          console.warn('5. Copy content from supabase/migrations/token_expiration.sql');
-          console.warn('6. Paste and click "Run"');
-          console.warn('7. Refresh this page');
-          return;
-        }
+        console.error('Database migration required. Please follow the setup instructions.');
         console.error('Error loading user profile:', error);
         return;
       }
 
       // Handle missing profile (PGRST116) by creating a default profile
       if (error && error.code === 'PGRST116') {
-        console.warn('⚠️ User Profile Missing - Creating default profile...');
-        try {
-          const { data: newProfile, error: createError } = await supabase
-            .from('profiles')
-            .insert({
-              id: user.id,
-              email: user.email || '',
-              tokens: 0
-            })
-            .select()
-            .single();
-
-          if (createError) {
-            console.warn('Could not create profile automatically. Please run database migrations:');
-            console.warn('1. Go to your Supabase dashboard');
-            console.warn('2. Click "SQL Editor" → "New Query"');  
-            console.warn('3. Copy content from supabase/migrations/20250928223951_noisy_field.sql');
-            console.warn('4. Paste and click "Run"');
-            console.warn('5. Copy content from supabase/migrations/token_expiration.sql');
-            console.warn('6. Paste and click "Run"');
-            console.warn('7. Sign out and sign back in');
-            return;
-          }
-
-          setUserProfile(newProfile);
-          return;
-        } catch (createError) {
-          console.warn('Could not create profile automatically. Please run database migrations and sign out/in.');
-          return;
-        }
+        console.error('🚨 DATABASE MIGRATION REQUIRED');
+        console.error('='.repeat(50));
+        console.error('Your database needs to be set up. Follow these steps:');
+        console.error('');
+        console.error('1. Go to your Supabase dashboard');
+        console.error('2. Click "SQL Editor" → "New Query"');
+        console.error('3. Copy ALL content from:');
+        console.error('   supabase/migrations/20250928223951_noisy_field.sql');
+        console.error('4. Paste and click "Run"');
+        console.error('5. You should see "Success. No rows returned"');
+        console.error('6. Refresh this page');
+        console.error('');
+        console.error('Need help? Check QUICKSTART.md for detailed steps');
+        console.error('='.repeat(50));
+        return;
       }
 
       setUserProfile(data);
     } catch (error: any) {
-      console.warn('Could not load or create user profile. Please ensure database migrations are applied.');
+      // Handle RLS policy violations (42501) and other database errors
+      if (error?.code === '42501' || error?.message?.includes('row-level security')) {
+        console.error('🚨 DATABASE MIGRATION REQUIRED');
+        console.error('='.repeat(50));
+        console.error('Row Level Security policies are not set up.');
+        console.error('');
+        console.error('REQUIRED: Run database migrations first:');
+        console.error('');
+        console.error('1. Go to your Supabase dashboard');
+        console.error('2. Click "SQL Editor" → "New Query"');
+        console.error('3. Copy ALL content from:');
+        console.error('   supabase/migrations/20250928223951_noisy_field.sql');
+        console.error('4. Paste and click "Run"');
+        console.error('5. You should see "Success. No rows returned"');
+        console.error('6. Sign out and sign back in');
+        console.error('');
+        console.error('Need help? Check QUICKSTART.md for detailed steps');
+        console.error('='.repeat(50));
+        return;
+      }
+      
+      console.error('Database error:', error);
+      console.error('Please ensure database migrations are applied. Check QUICKSTART.md');
     }
   };
 
