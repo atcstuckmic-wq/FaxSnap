@@ -54,7 +54,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         setUserProfile(data);
       } catch (error) {
-        console.error('Error fetching user profile:', error);
+        // Handle any unexpected errors from Supabase request
+        if (error && typeof error === 'object' && 'code' in error && error.code === 'PGRST205') {
+          console.warn('❌ Database Migration Required!');
+          console.warn('The profiles table does not exist. Please run the database migration:');
+          console.warn('1. Go to your Supabase dashboard');
+          console.warn('2. Click "SQL Editor" → "New Query"');
+          console.warn('3. Copy content from supabase/migrations/20250928223951_noisy_field.sql');
+          console.warn('4. Paste and click "Run"');
+          console.warn('5. Refresh this page');
+          return;
+        }
+        // Silently handle other errors to prevent error propagation
+        console.warn('Could not fetch user profile. This may be due to database setup.');
       }
     }
   };
