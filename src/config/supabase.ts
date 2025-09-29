@@ -3,16 +3,49 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Check if Supabase is properly configured (not just placeholder values)
-const isSupabaseConfigured = supabaseUrl && 
-  supabaseAnonKey && 
-  supabaseUrl.includes('supabase.co') && 
-  !supabaseUrl.includes('your-project') && // Not placeholder
-  !supabaseUrl.includes('YOUR_PROJECT') && // Not placeholder
-  supabaseAnonKey.startsWith('eyJ') && // Valid JWT format
-  !supabaseAnonKey.includes('your_anon_key') && // Not placeholder
-  !supabaseAnonKey.includes('YOUR_ANON_KEY') && // Not placeholder
-  supabaseAnonKey.length > 20;
+// Comprehensive check if Supabase is properly configured
+const isSupabaseConfigured = (() => {
+  // Check if variables exist
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return false;
+  }
+
+  // Check for common placeholder patterns
+  const placeholderPatterns = [
+    'your-project', 'YOUR_PROJECT', 'your_anon_key', 'YOUR_ANON_KEY',
+    'xxxxx', 'XXXXX', 'placeholder', 'PLACEHOLDER', 'example', 'EXAMPLE',
+    'abcdef', 'ABCDEF', 'project-id', 'PROJECT_ID'
+  ];
+
+  const hasUrlPlaceholder = placeholderPatterns.some(pattern => 
+    supabaseUrl.toLowerCase().includes(pattern.toLowerCase())
+  );
+  const hasKeyPlaceholder = placeholderPatterns.some(pattern => 
+    supabaseAnonKey.toLowerCase().includes(pattern.toLowerCase())
+  );
+
+  if (hasUrlPlaceholder || hasKeyPlaceholder) {
+    return false;
+  }
+
+  // Validate URL format - must be https and contain supabase.co
+  if (!supabaseUrl.startsWith('https://') || !supabaseUrl.includes('supabase.co')) {
+    return false;
+  }
+
+  // Validate anon key format - must be JWT (starts with eyJ) and be reasonably long
+  if (!supabaseAnonKey.startsWith('eyJ') || supabaseAnonKey.length < 100) {
+    return false;
+  }
+
+  // Additional validation: URL should match pattern
+  const urlPattern = /^https:\/\/[a-z0-9]+\.supabase\.co$/;
+  if (!urlPattern.test(supabaseUrl)) {
+    return false;
+  }
+
+  return true;
+})();
 
 let supabase: any;
 
