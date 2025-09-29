@@ -58,15 +58,16 @@ const SendFaxForm: React.FC<SendFaxFormProps> = ({ userTokens, onFaxSent }) => {
       const mediaUrl = await FileUploadService.uploadFile(selectedFile);
       toast.dismiss('upload');
 
-      // Step 2: Send fax via Telnyx
-      toast.loading('Sending fax...', { id: 'send' });
+      // Get environment variables
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const telnyxFromNumber = import.meta.env.VITE_TELNYX_FROM_NUMBER;
 
       if (!supabaseUrl || !telnyxFromNumber) {
-        throw new Error('Missing Telnyx configuration');
+        throw new Error('Missing Telnyx configuration. Check your .env file.');
       }
 
+      // Step 2: Send fax via Telnyx
+      toast.loading('Sending fax...', { id: 'send' });
       const faxResponse = await telnyxService.sendFax({
         to: data.recipientNumber,
         from: telnyxFromNumber,
