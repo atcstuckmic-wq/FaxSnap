@@ -29,12 +29,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUserProfile = async () => {
     if (user) {
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      setUserProfile(data);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) {
+          // Handle case where profiles table doesn't exist
+          if (error.code === 'PGRST205') {
+            console.error('❌ Database Migration Required!');
+            console.error('The profiles table does not exist. Please run the database migration:');
+            console.error('1. Go to your Supabase dashboard');
+            console.error('2. Click "SQL Editor" → "New Query"');
+            console.error('3. Copy content from supabase/migrations/20250928223951_noisy_field.sql');
+            console.error('4. Paste and click "Run"');
+            console.error('5. Refresh this page');
+            return;
+          }
+          throw error;
+        }
+        
+        setUserProfile(data);
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
     }
   };
 
