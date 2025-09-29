@@ -3,9 +3,15 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Check if Supabase is properly configured
-const isSupabaseConfigured = supabaseUrl && supabaseAnonKey && 
+// Check if Supabase is properly configured (not just placeholder values)
+const isSupabaseConfigured = supabaseUrl && 
+  supabaseAnonKey && 
   supabaseUrl.includes('supabase.co') && 
+  !supabaseUrl.includes('your-project') && // Not placeholder
+  !supabaseUrl.includes('YOUR_PROJECT') && // Not placeholder
+  supabaseAnonKey.startsWith('eyJ') && // Valid JWT format
+  !supabaseAnonKey.includes('your_anon_key') && // Not placeholder
+  !supabaseAnonKey.includes('YOUR_ANON_KEY') && // Not placeholder
   supabaseAnonKey.length > 20;
 
 let supabase: any;
