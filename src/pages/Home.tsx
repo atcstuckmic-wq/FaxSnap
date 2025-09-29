@@ -50,9 +50,8 @@ const Home: React.FC = () => {
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 mb-12">
               {user ? (
                 <Link to="/dashboard">
-                  <Button size="lg" variant="secondary" className="text-lg px-8 py-4">
+                  <Button size="lg" variant="primary" icon={ArrowRight} iconPosition="right" className="text-lg px-8 py-4">
                     Go to Dashboard
-                    <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
               ) : (
