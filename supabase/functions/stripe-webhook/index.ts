@@ -2,6 +2,11 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14.21.0'
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
   apiVersion: '2023-10-16',
 })
@@ -12,10 +17,17 @@ const supabase = createClient(
 )
 
 serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
   const signature = req.headers.get('Stripe-Signature')
 
   if (!signature) {
-    return new Response('No signature', { status: 400 })
+    return new Response('No signature', { 
+      status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
   }
 
   try {
@@ -46,29 +58,32 @@ serve(async (req) => {
 
             if (updateError) {
               console.error('Failed to update purchase:', updateError)
-              return new Response('Database error', { status: 500 })
+              return new Response('Database error', { 
+                status: 500,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+              })
             }
 
-            // Add tokens to user profile
-            const { data: profile, error: profileError } = await supabase
-              .from('profiles')
-              .select('tokens')
-              .eq('id', userId)
-              .single()
+            // Create individual tokens with expiration dates (6 months from now)
+            const expirationDate = new Date()
+            expirationDate.setMonth(expirationDate.getMonth() + 6)
 
-            if (profileError) {
-              console.error('Failed to get profile:', profileError)
-              return new Response('Profile error', { status: 500 })
-            }
+            const tokenRecords = Array.from({ length: tokens }, () => ({
+              user_id: userId,
+              purchase_id: null, // Will be updated after we get the purchase ID
+              expires_at: expirationDate.toISOString(),
+            }))
 
             const { error: tokenError } = await supabase
-              .from('profiles')
-              .update({ tokens: (profile.tokens || 0) + tokens })
-              .eq('id', userId)
+              .from('user_tokens')
+              .insert(tokenRecords)
 
             if (tokenError) {
-              console.error('Failed to add tokens:', tokenError)
-              return new Response('Token update error', { status: 500 })
+              console.error('Failed to create tokens:', tokenError)
+              return new Response('Token creation error', { 
+                status: 500,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+              })
             }
 
             console.log(`Added ${tokens} tokens to user ${userId}`)
@@ -90,9 +105,18 @@ serve(async (req) => {
       }
     }
 
-    return new Response('OK', { status: 200 })
+    return new Response('OK', { 
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
   } catch (error) {
     console.error('Webhook error:', error)
-    return new Response(`Webhook error: ${error.message}`, { status: 400 })
+    return new Response(
+      JSON.stringify({ error: `Webhook error: ${error.message}` }),
+      { 
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    )
   }
 })

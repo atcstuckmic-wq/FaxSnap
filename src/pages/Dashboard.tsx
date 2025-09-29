@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Send, History, Coins, Plus, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '../config/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { StripeService } from '../services/stripe';
 import Button from '../components/UI/Button';
 import Card from '../components/UI/Card';
 import SendFaxForm from '../components/Fax/SendFaxForm';
 import TokenPackages from '../components/TokenPurchase/TokenPackages';
+import toast from 'react-hot-toast';
 
 const Dashboard: React.FC = () => {
   const { user, userProfile, refreshUserProfile } = useAuth();
@@ -19,6 +21,21 @@ const Dashboard: React.FC = () => {
     }
   }, [user, activeTab]);
 
+  // Check for successful Stripe checkout
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+    
+    if (sessionId) {
+      // Remove session_id from URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+      
+      // Show success message and refresh profile
+      toast.success('🎉 Payment successful! Tokens have been added to your account.');
+      refreshUserProfile();
+    }
+  }, [refreshUserProfile]);
   const loadFaxHistory = async () => {
     if (!user) return;
     

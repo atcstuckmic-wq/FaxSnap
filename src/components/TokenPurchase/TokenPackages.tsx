@@ -31,12 +31,20 @@ const TokenPackages: React.FC<TokenPackagesProps> = ({ onSelectPackage }) => {
       return;
     }
 
+    // Check if Stripe is configured
+    if (!StripeService.isConfigured()) {
+      toast.error('Payment system is not configured. Please contact support.');
+      console.warn('⚠️ Stripe not configured. Add VITE_STRIPE_PUBLISHABLE_KEY to environment variables.');
+      return;
+    }
+
     try {
       toast.loading('Redirecting to checkout...', { id: 'checkout' });
       await StripeService.createCheckoutSession(pkg, user.id);
     } catch (error) {
       toast.dismiss('checkout');
-      toast.error('Failed to start checkout. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start checkout. Please try again.';
+      toast.error(errorMessage);
       console.error('Checkout error:', error);
     }
   };

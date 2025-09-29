@@ -73,7 +73,17 @@ export class ConnectionTester {
       return {
         service: 'Stripe',
         status: 'not_configured',
-        message: 'Not configured (optional for testing)'
+        message: 'Not configured - required for payments',
+        details: 'Add VITE_STRIPE_PUBLISHABLE_KEY to enable token purchases'
+      };
+    }
+
+    if (key.includes('placeholder') || key.includes('your_key') || key === 'pk_test_...') {
+      return {
+        service: 'Stripe',
+        status: 'error',
+        message: 'Placeholder value detected',
+        details: 'Replace with your actual Stripe publishable key'
       };
     }
 

@@ -1,6 +1,8 @@
 import { loadStripe } from '@stripe/stripe-js';
+import { supabase } from '../config/supabase';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 interface TokenPackage {
   id: string;
@@ -9,26 +11,31 @@ interface TokenPackage {
 }
 
 export class StripeService {
+  static isConfigured(): boolean {
+    return !!stripePublishableKey && stripePublishableKey.trim() !== '';
+  }
+
   static async createCheckoutSession(packageData: TokenPackage, userId: string) {
+    if (!this.isConfigured()) {
+      throw new Error('Stripe is not configured. Please add VITE_STRIPE_PUBLISHABLE_KEY to your environment variables.');
+    }
+
     try {
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // Call Supabase edge function to create checkout session
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: {
           packageId: packageData.id,
           tokens: packageData.tokens,
           amount: Math.round(packageData.price * 100), // Convert to cents
           userId,
-        }),
+        },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to create checkout session');
+      if (error) {
+        throw new Error(error.message || 'Failed to create checkout session');
       }
 
-      const { sessionId } = await response.json();
+      const { sessionId } = data;
       
       const stripe = await stripePromise;
       if (!stripe) {
@@ -50,19 +57,15 @@ export class StripeService {
 
   static async handleCheckoutSuccess(sessionId: string) {
     try {
-      const response = await fetch('/api/verify-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ sessionId }),
+      const { data, error } = await supabase.functions.invoke('verify-checkout-session', {
+        body: { sessionId },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to verify checkout session');
+      if (error) {
+        throw new Error(error.message || 'Failed to verify checkout session');
       }
 
-      return await response.json();
+      return data;
     } catch (error) {
       console.error('Checkout verification error:', error);
       throw error;

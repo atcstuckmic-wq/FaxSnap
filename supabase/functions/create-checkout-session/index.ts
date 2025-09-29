@@ -24,6 +24,16 @@ serve(async (req) => {
 
     const { packageId, tokens, amount, userId } = await req.json()
 
+    if (!userId || !tokens || !amount) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required parameters' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -33,7 +43,7 @@ serve(async (req) => {
             currency: 'usd',
             product_data: {
               name: `${tokens} Fax Tokens`,
-              description: `${tokens} fax tokens for FaxSnap`,
+              description: `${tokens} fax token${tokens === 1 ? '' : 's'} for FaxSnap (expires 6 months after purchase)`,
             },
             unit_amount: amount,
           },
@@ -41,13 +51,15 @@ serve(async (req) => {
         },
       ],
       mode: 'payment',
-      success_url: `${req.headers.get('origin')}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get('origin')}/dashboard`,
+      success_url: `${req.headers.get('origin') || 'http://localhost:5173'}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.headers.get('origin') || 'http://localhost:5173'}/dashboard`,
       metadata: {
         userId,
         tokens: tokens.toString(),
         packageId,
       },
+      customer_email: null, // Let customer enter their email
+      billing_address_collection: 'auto',
     })
 
     // Create pending purchase record
