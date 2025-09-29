@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('id', user.id)
         .single();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         if (error.code === 'PGRST205') {
           console.warn('⚠️ Database Migration Required!');
           console.warn('The profiles table does not exist. Please run the database migrations:');
@@ -50,38 +50,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.warn('7. Refresh this page');
           return;
         }
-        if (error.code === 'PGRST116') {
-          console.warn('⚠️ User Profile Missing!');
-          console.warn('Your user profile was not found in the database. This can happen if:');
-          console.warn('1. Database migrations were not fully applied');
-          console.warn('2. Your account was created before the database was set up');
-          console.warn('To fix this:');
-          console.warn('1. Go to your Supabase dashboard');
-          console.warn('2. Click "SQL Editor" → "New Query"');  
-          console.warn('3. Copy content from supabase/migrations/20250928223951_noisy_field.sql');
-          console.warn('4. Paste and click "Run"');
-          console.warn('5. Copy content from supabase/migrations/token_expiration.sql');
-          console.warn('6. Paste and click "Run"');
-          console.warn('7. Sign out and sign back in, or refresh this page');
+        console.error('Error loading user profile:', error);
+        return;
+      }
+
+      // Handle missing profile (PGRST116) by creating a default profile
+      if (error && error.code === 'PGRST116') {
+        console.warn('⚠️ User Profile Missing - Creating default profile...');
+        try {
+          const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              email: user.email || '',
+              tokens: 0
+            })
+            .select()
+            .single();
+
+          if (createError) {
+            console.warn('Could not create profile automatically. Please run database migrations:');
+            console.warn('1. Go to your Supabase dashboard');
+            console.warn('2. Click "SQL Editor" → "New Query"');  
+            console.warn('3. Copy content from supabase/migrations/20250928223951_noisy_field.sql');
+            console.warn('4. Paste and click "Run"');
+            console.warn('5. Copy content from supabase/migrations/token_expiration.sql');
+            console.warn('6. Paste and click "Run"');
+            console.warn('7. Sign out and sign back in');
+            return;
+          }
+
+          setUserProfile(newProfile);
+          return;
+        } catch (createError) {
+          console.warn('Could not create profile automatically. Please run database migrations and sign out/in.');
           return;
         }
       }
 
       setUserProfile(data);
     } catch (error: any) {
-      if (error?.message?.includes('PGRST205') || error?.body?.includes('PGRST205')) {
-        console.warn('⚠️ Database Migration Required!');
-        console.warn('The profiles table does not exist. Please run the database migrations:');
-        console.warn('1. Go to your Supabase dashboard');
-        console.warn('2. Click "SQL Editor" → "New Query"');  
-        console.warn('3. Copy content from supabase/migrations/20250928223951_noisy_field.sql');
-        console.warn('4. Paste and click "Run"');
-        console.warn('5. Copy content from supabase/migrations/token_expiration.sql');
-        console.warn('6. Paste and click "Run"');
-        console.warn('7. Refresh this page');
-        return;
-      }
-      console.error('Error loading user profile:', error);
+      console.warn('Could not load or create user profile. Please ensure database migrations are applied.');
     }
   };
 
