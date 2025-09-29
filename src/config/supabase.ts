@@ -24,6 +24,8 @@ const isValidSupabaseConfig = () => {
   
   return true;
 };
+
+if (!isValidSupabaseConfig()) {
   console.error('⚠️ Supabase not configured. Please set up your environment variables.');
   
   // Create a complete mock client that doesn't make network requests
@@ -119,5 +121,4 @@ const isValidSupabaseConfig = () => {
   supabase = createClient(supabaseUrl, supabaseAnonKey);
 }
 
-if (!isValidSupabaseConfig()) {
 export { supabase };
