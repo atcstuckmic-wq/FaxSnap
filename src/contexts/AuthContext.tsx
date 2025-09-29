@@ -48,7 +48,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.warn('5. Refresh this page');
             return;
           }
-          throw error;
+          console.error('Error fetching user profile:', error);
+          return;
         }
         
         setUserProfile(data);
