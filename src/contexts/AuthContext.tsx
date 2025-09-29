@@ -50,6 +50,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.warn('7. Refresh this page');
           return;
         }
+        if (error.code === 'PGRST116') {
+          console.warn('⚠️ User Profile Missing!');
+          console.warn('Your user profile was not found in the database. This can happen if:');
+          console.warn('1. Database migrations were not fully applied');
+          console.warn('2. Your account was created before the database was set up');
+          console.warn('To fix this:');
+          console.warn('1. Go to your Supabase dashboard');
+          console.warn('2. Click "SQL Editor" → "New Query"');  
+          console.warn('3. Copy content from supabase/migrations/20250928223951_noisy_field.sql');
+          console.warn('4. Paste and click "Run"');
+          console.warn('5. Copy content from supabase/migrations/token_expiration.sql');
+          console.warn('6. Paste and click "Run"');
+          console.warn('7. Sign out and sign back in, or refresh this page');
+          return;
+        }
       }
 
       setUserProfile(data);
